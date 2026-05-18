@@ -1,0 +1,8 @@
+{
+  "allowed_dirs": [
+    "/Users/YOUR_USERNAME/Desktop",
+    "/Users/YOUR_USERNAME/Downloads"
+  ],
+  "allowed_files": [],
+  "port": 8080
+}
