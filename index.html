@@ -123,6 +123,25 @@
     }
     #terminal-wrap { flex: 1; overflow: hidden; padding: 4px; }
     #xterm-container { width: 100%; height: 100%; }
+
+    /* ── Virtual key bar (mobile) ── */
+    #keybar {
+      display: flex; gap: 4px; padding: 6px;
+      background: var(--surface); border-top: 1px solid var(--border);
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      flex-shrink: 0;
+      padding-bottom: max(6px, env(safe-area-inset-bottom));
+    }
+    #keybar::-webkit-scrollbar { display: none; }
+    .kb {
+      flex-shrink: 0; min-width: 44px; padding: 9px 11px;
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; font-family: "SF Mono", Menlo, monospace;
+      cursor: pointer; user-select: none; -webkit-user-select: none;
+      transition: background .1s;
+    }
+    .kb:active { background: var(--accent); color: #fff; }
   </style>
 </head>
 <body>
@@ -158,6 +177,7 @@
     <div id="terminal-wrap">
       <div id="xterm-container"></div>
     </div>
+    <div id="keybar"></div>
   </div>
 </div>
 
@@ -336,6 +356,38 @@
   const fitAddon = new FitAddon.FitAddon();
   term.loadAddon(fitAddon);
   term.open(document.getElementById("xterm-container"));
+
+  // ── Virtual key bar ──
+  const KEYS = [
+    { label: "Esc",  send: "\x1b" },
+    { label: "Tab",  send: "\t" },
+    { label: "↑",    send: "\x1b[A" },
+    { label: "↓",    send: "\x1b[B" },
+    { label: "←",    send: "\x1b[D" },
+    { label: "→",    send: "\x1b[C" },
+    { label: "^C",   send: "\x03" },
+    { label: "^D",   send: "\x04" },
+    { label: "Clr",  send: "\x0c" },
+    { label: "/",    send: "/" },
+    { label: "|",    send: "|" },
+    { label: "Home", send: "\x1b[H" },
+    { label: "End",  send: "\x1b[F" },
+  ];
+  const keybar = document.getElementById("keybar");
+  KEYS.forEach(k => {
+    const btn = document.createElement("button");
+    btn.className = "kb";
+    btn.textContent = k.label;
+    // Prevent focus loss so mobile soft keyboard stays open
+    btn.addEventListener("mousedown", e => e.preventDefault());
+    btn.addEventListener("touchstart", e => e.preventDefault(), { passive: false });
+    btn.addEventListener("click", () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "input", data: k.send }));
+      }
+    });
+    keybar.appendChild(btn);
+  });
 
   let ws = null;
   let termPath = "";

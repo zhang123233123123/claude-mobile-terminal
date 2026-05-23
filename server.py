@@ -21,16 +21,8 @@ AUTH_USER = os.environ.get("AUTH_USER", "admin")
 AUTH_PASS = os.environ.get("AUTH_PASS", "")
 
 
-def auth(credentials: HTTPBasicCredentials = Depends(security)):
-    valid = (
-        secrets.compare_digest(credentials.username.encode(), AUTH_USER.encode()) and
-        secrets.compare_digest(credentials.password.encode(), AUTH_PASS.encode())
-    )
-    if not valid:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            headers={"WWW-Authenticate": "Basic"},
-        )
+def auth():
+    return  # auth disabled (URL is the only secret)
 
 BASE_DIR = Path(__file__).parent
 HTML_FILE = BASE_DIR / "index.html"
@@ -169,9 +161,6 @@ async def terminal_ws(
     session_id: str = Query(default=""),
     token: str = Query(default=""),
 ):
-    if not secrets.compare_digest(token.encode(), AUTH_PASS.encode()):
-        await websocket.close(code=4001)
-        return
     await websocket.accept()
     cfg = load_config()
     allowed_dirs = cfg.get("allowed_dirs", [])
