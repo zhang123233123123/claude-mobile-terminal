@@ -28,6 +28,7 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env — optional now that auth is removed, but AUTH_PASS may be loaded by other code
 
+cp config.json.example config.json
 # Edit config.json — set your allowed directories
 
 ./start.sh
@@ -45,6 +46,7 @@ py -m pip install --user fastapi "uvicorn[standard]" pywinpty
 # Install cloudflared (optional, only needed for public access)
 winget install --id Cloudflare.cloudflared
 
+Copy-Item config.json.example config.json
 # Edit config.json — use Windows paths, e.g. C:\Users\YOU\Desktop
 .\start.ps1
 ```
@@ -53,7 +55,7 @@ Cloudflare Tunnel prints a public `https://xxx.trycloudflare.com` URL. Open it o
 
 ## Configuration
 
-**`config.json`**
+**`config.json`** *(copy from `config.json.example`, gitignored — local to each install)*
 ```json
 {
   "allowed_dirs": [
@@ -93,7 +95,7 @@ Modifications in this fork relative to [`zhang123233123123/claude-mobile-termina
 ### Windows support
 - **`server.py`** — conditional import: uses `pywinpty.PtyProcess` on Windows, `ptyprocess.PtyProcessUnicode` on Unix. Drop-in replacement, same `spawn / read / write / setwinsize / terminate` API.
 - **`start.ps1`** — PowerShell equivalent of `start.sh`. Loads `.env`, reads `port` from `config.json`, launches uvicorn as a background job, then runs cloudflared in foreground. Falls back to LAN-only mode if cloudflared isn't installed.
-- **`config.json`** — paths updated to Windows-style `C:\\Users\\...` placeholders.
+- **`config.json`** — untracked from git (`.gitignore`'d); ships as `config.json.example` with Windows-style placeholders. Each install gets a clean working tree.
 
 ### Mobile UX
 - **`index.html`** — added a horizontally scrollable virtual key bar below the xterm container with: `Esc`, `Tab`, `↑`, `↓`, `←`, `→`, `^C`, `^D`, `Clr`, `/`, `|`, `Home`, `End`. Each key sends the correct ANSI escape sequence over the existing WebSocket. Buttons use `preventDefault()` on `mousedown`/`touchstart` so the mobile soft keyboard stays focused.
