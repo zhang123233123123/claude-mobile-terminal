@@ -5,7 +5,11 @@ import secrets
 from datetime import datetime
 from pathlib import Path
 
-import ptyprocess
+import sys
+if sys.platform == "win32":
+    from winpty import PtyProcess
+else:
+    from ptyprocess import PtyProcessUnicode as PtyProcess
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -183,7 +187,7 @@ async def terminal_ws(
 
     cmd = ["claude", "--resume", session_id] if session_id else ["claude"]
 
-    proc = ptyprocess.PtyProcessUnicode.spawn(
+    proc = PtyProcess.spawn(
         cmd,
         cwd=work_dir,
         env=env,
