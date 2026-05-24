@@ -5,7 +5,11 @@ import secrets
 from datetime import datetime
 from pathlib import Path
 
-import ptyprocess
+import sys
+if sys.platform == "win32":
+    from winpty import PtyProcess
+else:
+    from ptyprocess import PtyProcessUnicode as PtyProcess
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -17,16 +21,8 @@ AUTH_USER = os.environ.get("AUTH_USER", "admin")
 AUTH_PASS = os.environ.get("AUTH_PASS", "")
 
 
-def auth(credentials: HTTPBasicCredentials = Depends(security)):
-    valid = (
-        secrets.compare_digest(credentials.username.encode(), AUTH_USER.encode()) and
-        secrets.compare_digest(credentials.password.encode(), AUTH_PASS.encode())
-    )
-    if not valid:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            headers={"WWW-Authenticate": "Basic"},
-        )
+def auth():
+    return  # auth disabled (URL is the only secret)
 
 BASE_DIR = Path(__file__).parent
 HTML_FILE = BASE_DIR / "index.html"
@@ -165,9 +161,6 @@ async def terminal_ws(
     session_id: str = Query(default=""),
     token: str = Query(default=""),
 ):
-    if not secrets.compare_digest(token.encode(), AUTH_PASS.encode()):
-        await websocket.close(code=4001)
-        return
     await websocket.accept()
     cfg = load_config()
     allowed_dirs = cfg.get("allowed_dirs", [])
@@ -183,7 +176,7 @@ async def terminal_ws(
 
     cmd = ["claude", "--resume", session_id] if session_id else ["claude"]
 
-    proc = ptyprocess.PtyProcessUnicode.spawn(
+    proc = PtyProcess.spawn(
         cmd,
         cwd=work_dir,
         env=env,
